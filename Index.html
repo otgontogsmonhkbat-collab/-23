@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Avatar Site</title>
+<style>
+body { font-family: Arial; background:#f4f6ff; text-align:center; }
+.card { background:white; padding:20px; margin:20px auto; width:700px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+#avatarDisplay img { width:120px; display:inline-block; margin:5px; }
+#avatarSelect img, #outfitSelect img { width:80px; cursor:pointer; margin:3px; border:2px solid transparent;}
+#avatarSelect img.selected, #outfitSelect img.selected { border-color:#f39c12; }
+button { padding:8px 15px; margin:5px; cursor:pointer; }
+#leaderboard { text-align:left; }
+.hidden { display:none; }
+</style>
+</head>
+<body>
+
+<h1>🌞 Дулааны цацраг ба Нарны энерги</h1>
+
+<div id="avatarSection" class="card">
+  <h3>Avatar сонгоно уу (Level 1-2: Амьтан, Level 3+: Хүн)</h3>
+  <div id="avatarSelect"></div>
+
+  <h3>Outfit сонгоно уу</h3>
+  <div id="outfitSelect"></div>
+
+  <div id="avatarDisplay" style="margin-top:15px;"></div>
+  <button id="startQuizBtn" onclick="startQuiz()" disabled>Start Quiz</button>
+</div>
+
+<div id="quizSection" class="card hidden">
+  <h3 id="questionContainer"></h3>
+  <div id="answersContainer"></div>
+</div>
+
+<div id="leaderboardSection" class="card">
+  <h3>🏆 Leaderboard</h3>
+  <div id="leaderboard"></div>
+</div>
+
+<script>
+// Level simulation
+let userLevel = 3;
+let selectedAvatar = "";
+let selectedAvatarType = "animal";
+let selectedOutfit = "";
+
+// Avatars
+let avatars = {
+  animal: ["tarvaga","irves","zaan"],
+  human: ["human1","human2"]
+};
+
+// Outfits
+let outfits = {
+  animal:["deel1","deel2","malgai1","boots1","belt1","accessory1","accessory2","accessory3","accessory4","accessory5"],
+  human:["deel1","deel2","malgai1","malgai2","boots1","boots2","belt1","belt2","accessory1","accessory2","accessory3"]
+};
+
+// Leaderboard mock
+let leaderboardData = [
+  {name:"Otgoo", score:8, avatar:"tarvaga"},
+  {name:"Tenger", score:6, avatar:"irves"}
+];
+
+// Quiz simulation
+let questions = [
+  {q:"1. Дулаан дамжуулалтын ямар хэлбэр орчин шаарддаггүй?", a:["Конвекц","Дулаан дамжуулал","Дулааны цацраг","Диффузи"], correct:"Дулааны цацраг"},
+  {q:"2. Дулааны цацрагийн эрчим юунаас хамааралтай?", a:["Масс","Температур","Байршил","Даралт"], correct:"Температур"},
+  {q:"3. Нарнаас дэлхийд энерги ямар хэлбэрээр ирдэг вэ?", a:["Цахилгаан соронзон долгион","Дулаан дамжуулал","Агаарын урсгал","Механик долгион"], correct:"Цахилгаан соронзон долгион"}
+];
+let currentQ = 0;
+let score = 0;
+
+// Show avatars
+function showAvatarOptions(){
+  let container = document.getElementById('avatarSelect');
+  container.innerHTML = '';
+  avatars.animal.forEach(a=>{
+    container.innerHTML += `<img src="img/animals/${a}.png" onclick="selectAvatar('${a}','animal',this)">`;
+  });
+  if(userLevel>=3){
+    avatars.human.forEach(h=>{
+      container.innerHTML += `<img src="img/humans/${h}.png" onclick="selectAvatar('${h}','human',this)">`;
+    });
+  }
+}
+
+// Show outfits
+function showOutfits(){
+  let container = document.getElementById('outfitSelect');
+  container.innerHTML = '';
+  outfits[selectedAvatarType].forEach(o=>{
+    container.innerHTML += `<img src="img/clothes/${o}.png" onclick="selectOutfit('${o}',this)">`;
+  });
+}
+
+// Select avatar
+function selectAvatar(a,type,el){
+  selectedAvatar = a;
+  selectedAvatarType = type;
+  document.querySelectorAll('#avatarSelect img').forEach(img=>img.classList.remove('selected'));
+  el.classList.add('selected');
+  showOutfits();
+  renderAvatar();
+  checkStartReady();
+}
+
+// Select outfit
+function selectOutfit(o,el){
+  selectedOutfit = o;
+  document.querySelectorAll('#outfitSelect img').forEach(img=>img.classList.remove('selected'));
+  el.classList.add('selected');
+  renderAvatar();
+  checkStartReady();
+}
+
+// Render avatar
+function renderAvatar(){
+  let div = document.getElementById('avatarDisplay');
+  div.innerHTML = '';
+  if(selectedAvatar){
+    div.innerHTML += `<img src="img/${selectedAvatarType}s/${selectedAvatar}.png">`;
+  }
+  if(selectedOutfit){
+    div.innerHTML += `<img src="img/clothes/${selectedOutfit}.png">`;
+  }
+}
+
+// Enable start button
+function checkStartReady(){
+  document.getElementById('startQuizBtn').disabled = !(selectedAvatar && selectedOutfit);
+}
+
+// Quiz
+function startQuiz(){
+  document.getElementById('avatarSection').classList.add('hidden');
+  document.getElementById('quizSection').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion(){
+  if(currentQ>=questions.length){ finishQuiz(); return; }
+  let q = questions[currentQ];
+  document.getElementById('questionContainer').innerText = q.q;
+  let ansDiv = document.getElementById('answersContainer');
+  ansDiv.innerHTML = '';
+  q.a.forEach(ans=>{
+    let btn = document.createElement('button');
+    btn.innerText = ans;
+    btn.onclick = ()=>{
+      if(ans==q.correct) score++;
+      currentQ++;
+      showQuestion();
+    };
+    ansDiv.appendChild(btn);
+  });
+}
+
+// Finish quiz
+function finishQuiz(){
+  alert(`Таны оноо: ${score}`);
+  leaderboardData.push({name:"Таны нэр", score:score, avatar:selectedAvatar});
+  updateLeaderboard();
+  document.getElementById('quizSection').classList.add('hidden');
+  document.getElementById('avatarSection').classList.remove('hidden');
+  selectedAvatar=""; selectedOutfit=""; renderAvatar();
+  document.getElementById('startQuizBtn').disabled=true;
+}
+
+// Leaderboard
+function updateLeaderboard(){
+  leaderboardData.sort((a,b)=>b.score-a.score);
+  let lb = document.getElementById('leaderboard');
+  lb.innerHTML = leaderboardData.map((u,i)=>`${i+1}. ${u.name} (${u.score})`).join('<br>');
+}
+
+// Init
+showAvatarOptions();
+updateLeaderboard();
+</script>
+
+</body>
+</html>
